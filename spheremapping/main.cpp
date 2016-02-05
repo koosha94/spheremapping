@@ -15,6 +15,9 @@
 #include <assert.h>
 #include <math.h>
 #include "math_funcs.h"
+#include <string>
+#include <iostream>
+#include <fstream>
 
 // camera matrices. it's easier if they are global
 mat4 view_mat;
@@ -33,6 +36,7 @@ void create_cube_map (
 
 bool load_cube_map_side (GLuint texture, GLenum side_target, const char* file_name);
 void _update_fps_counter (GLFWwindow* window);
+std::string loadShader(std::string fname);
 
 int g_gl_width = 640;
 int g_gl_height = 480;
@@ -163,16 +167,14 @@ int main () {
         1.0f, -1.0f,  1.0f
     };
     
-    float spherePoints[3*36];
+    //points for camera triangle
+    GLfloat cam_points[] = {
+        0.0f,	0.5f,	0.0f,
+        0.5f, -0.5f,	0.0f,
+        -0.5f, -0.5f,	0.0f
+    };
     
-    for(int i=0; i<(3*36); i+=3)
-    {
-        spherePoints[i] = points[i] * sqrtf((1 - powf(points[i+1],2)/2 - powf(points[i+2],2)/2 + (powf(points[i+1],2)*powf(points[i+2],2))/3));
-        
-        spherePoints[i+1] = points[i] * sqrtf((1 - powf(points[i],2)/2 - powf(points[i+2],2)/2 + (powf(points[i],2)*powf(points[i+2],2))/3));
-        
-        spherePoints[i+2] = points[i] * sqrtf((1 - powf(points[i+1],2)/2 - powf(points[i],2)/2 + (powf(points[i+1],2)*powf(points[i],2))/3));
-    }
+
     
     
     
@@ -181,10 +183,12 @@ int main () {
     glBindBuffer (GL_ARRAY_BUFFER, vbo);
     glBufferData (GL_ARRAY_BUFFER, 3 * 36 * sizeof (float), &points, GL_STATIC_DRAW);
     
-    GLuint vbo_sphere;
-    glGenBuffers (1, &vbo_sphere);
-    glBindBuffer (GL_ARRAY_BUFFER, vbo_sphere);
-    glBufferData (GL_ARRAY_BUFFER, 3 * 36 * sizeof (float), &spherePoints, GL_STATIC_DRAW);
+    GLuint userCam_vbo;
+    glGenBuffers (1, &userCam_vbo);
+    glBindBuffer (GL_ARRAY_BUFFER, userCam_vbo);
+    glBufferData (GL_ARRAY_BUFFER, 9 * sizeof (GLfloat), cam_points,
+                  GL_STATIC_DRAW);
+
     
     GLuint vao;
     glGenVertexArrays (1, &vao);
@@ -193,12 +197,15 @@ int main () {
     glBindBuffer (GL_ARRAY_BUFFER, vbo);
     glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
     
-    GLuint vao_sphere;
-    glGenVertexArrays (1, &vao_sphere);
-    glBindVertexArray (vao_sphere);
+    GLuint userCam_vao;
+    glGenVertexArrays (1, &userCam_vao);
+    glBindVertexArray (userCam_vao);
     glEnableVertexAttribArray (0);
-    glBindBuffer (GL_ARRAY_BUFFER, vbo_sphere);
+    glBindBuffer (GL_ARRAY_BUFFER, userCam_vbo);
     glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    
+    
+
     
     //Create Cube map
     GLuint cube_map_texture;
@@ -212,44 +219,67 @@ int main () {
     "out vec3 texcoords;"
     "vec3 newP;"
     "void main () {"
-    "    newP.x = vp.x*sqrt(1 - ( (vp.y * vp.y)/2 ) - ( (vp.z * vp.z)/2 ) + ( ( (vp.y * vp.y) * (vp.z * vp.z))/3));"
-    "    newP.y = vp.y*sqrt(1 - ( (vp.z * vp.z)/2 ) - ( (vp.x * vp.x)/2 ) + ( ( (vp.z * vp.z) * (vp.x * vp.x))/3));"
-    //"    newP.z = vp.z*sqrt(1 - ( (vp.x * vp.x)/2 ) - ( (vp.y * vp.y)/2 ) + ( ( (vp.x * vp.x) * (vp.y * vp.y))/3));"
-    "    newP.z = vp.z;"
     "    texcoords = vp;"
-    //"    texcoords = P * V * vp;"
-    //"texcoords = newP;"
-    //"    gl_Position = P * V * vec4 (vp, 1.0);"
     "    gl_Position = P * V * vec4 (vp, 1.0);"
     "}";
     
-    const char* fragment_shader =
-    "#version 400\n"
+    const char* fragment_shader = loadShader("/Users/saeedboorboor/PhD/Projects/spheremapping/spheremapping/fragmentShader.frag").c_str();
+    /*"#version 400\n"
     "in vec3 texcoords;"
     "uniform samplerCube cube_texture;"
     "out vec4 frag_colour;"
     "vec4 cubeToLatLon(samplerCube cubemap, vec3 inUV) {"
-    "const float PI = 3.141592653589793238462643383;"
     "vec3 cubmapTexCoords;"
-    //"cubmapTexCoords.x = cos(inUV.x * PI * 2.0) * cos(inUV.y * PI);"
-    //"cubmapTexCoords.y = sin(inUV.y * PI);"
-    //"cubmapTexCoords.z = sin(inUV.x * PI * 2.0) * cos(inUV.y * PI);"
-    "cubmapTexCoords.x = inUV.x*sqrt(1 - ( (inUV.y * inUV.y)/2 ) - ( (inUV.z * inUV.z)/2 ) + ( ( (inUV.y * inUV.y) * (inUV.z * inUV.z))/3));"
-    "cubmapTexCoords.y = inUV.y*sqrt(1 - ( (inUV.z * inUV.z)/2 ) - ( (inUV.x * inUV.x)/2 ) + ( ( (inUV.z * inUV.z) * (inUV.x * inUV.x))/3));"
-    //"cubmapTexCoords.z = inUV.z;"
+    //"cubmapTexCoords.x = inUV.x*sqrt(1 - ( (inUV.y * inUV.y)/2 ) - ( (inUV.z * inUV.z)/2 ) + ( ( (inUV.y * inUV.y) * (inUV.z * inUV.z))/3));"
+    "cubmapTexCoords.x = inUV.x;"
+    //"cubmapTexCoords.y= inUV.y*sqrt(1 - ( (inUV.z * inUV.z)/2 ) - ( (inUV.x * inUV.x)/2 ) + ( ( (inUV.z * inUV.z) * (inUV.x * inUV.x))/3));"
+    "cubmapTexCoords.y = inUV.y;"
     "cubmapTexCoords.z = inUV.z*sqrt(1 - ( (inUV.x * inUV.x)/2 ) - ( (inUV.y * inUV.y)/2 ) + ( ( (inUV.x * inUV.x) * (inUV.y * inUV.y))/3));"
+    //"cubmapTexCoords.z = inUV.z;"
     "return texture(cubemap, cubmapTexCoords);"
     "}"
     "void main () {"
     //"  frag_colour = texture (cube_texture, texcoords);"
     "  frag_colour = cubeToLatLon (cube_texture, texcoords);"
-    "}";
+    "}";*/
     
+    
+    const char* userCam_vertex_shader =
+    "#version 400\n"
+    "attribute vec3 vp;"
+    "void main () {"
+    "	gl_Position = vec4 (vp, 1.0);"
+    "}";
+    /* the fragment shader colours each fragment (pixel-sized area of the
+     triangle) */
+    const char* userCam_fragment_shader =
+    "#version 400\n"
+    "void main () {"
+    "	gl_FragColor = vec4 (0.5, 0.0, 0.5, 0.2);"
+    "}";
+    /* GL shader objects for vertex and fragment shader [components] */
+    GLuint userCam_vs, userCam_fs;
+    /* GL shader programme object [combined, to link] */
+    GLuint userCam_shader_programme;
+    
+    
+    
+    userCam_vs = glCreateShader (GL_VERTEX_SHADER);
+    glShaderSource (userCam_vs, 1, &userCam_vertex_shader, NULL);
+    glCompileShader (userCam_vs);
+    userCam_fs = glCreateShader (GL_FRAGMENT_SHADER);
+    glShaderSource (userCam_fs, 1, &userCam_fragment_shader, NULL);
+    glCompileShader (userCam_fs);
+    userCam_shader_programme = glCreateProgram ();
+    glAttachShader (userCam_shader_programme, userCam_fs);
+    glAttachShader (userCam_shader_programme, userCam_vs);
+    glLinkProgram (userCam_shader_programme);
     
     GLuint vs = glCreateShader (GL_VERTEX_SHADER);
     glShaderSource (vs, 1, &vertex_shader, NULL);
     glCompileShader (vs);
     GLuint fs = glCreateShader (GL_FRAGMENT_SHADER);
+
     glShaderSource (fs, 1, &fragment_shader, NULL);
     glCompileShader (fs);
     
@@ -262,8 +292,8 @@ int main () {
     int cube_V_location = glGetUniformLocation (cube_sp, "V");
     int cube_P_location = glGetUniformLocation (cube_sp, "P");
     
-    /*-------------------------------CREATE CAMERA--------------------------------*/
-#define ONE_DEG_IN_RAD (2.0 * M_PI) / 360.0 // 0.017444444
+    /*-------------------------------CREATE GLOBAL CAMERA--------------------------------*/
+    #define ONE_DEG_IN_RAD (2.0 * M_PI) / 360.0 // 0.017444444
     // input variables
     float near = 0.1f; // clipping plane
     float far = 100.0f; // clipping plane
@@ -282,6 +312,21 @@ int main () {
     vec4 fwd (0.0f, 0.0f, -1.0f, 0.0f);
     vec4 rgt (1.0f, 0.0f, 0.0f, 0.0f);
     vec4 up (0.0f, 1.0f, 0.0f, 0.0f);
+    
+    /*-------------------------------CREATE USER'S CAMERA--------------------------------*/
+
+
+    float user_cam_speed = 3.0f; // 1 unit per second
+    float user_cam_heading_speed = 50.0f; // 30 degrees per second
+    float user_cam_heading = 0.0f; // y-rotation in degrees
+    mat4 user_T = translate (identity_mat4 (), vec3 (-cam_pos.v[0], -cam_pos.v[1], -cam_pos.v[2]));
+    mat4 user_R = rotate_y_deg (identity_mat4 (), -cam_heading);
+    versor user_q = quat_from_axis_deg (-user_cam_heading, 0.0f, 1.0f, 0.0f);
+    view_mat = R * T;
+    // keep track of some useful vectors that can be used for keyboard movement
+    vec4 u_fwd (0.0f, 0.0f, -1.0f, 0.0f);
+    vec4 u_rgt (1.0f, 0.0f, 0.0f, 0.0f);
+    vec4 u_up (0.0f, 1.0f, 0.0f, 0.0f);
     
     /*---------------------------SET RENDERING DEFAULTS---------------------------*/
     glUseProgram (cube_sp);
@@ -437,7 +482,28 @@ int main () {
 }
 
 
+std::string loadShader(std::string fname)
+{
+    std::string content;
+    std::ifstream fileStream(fname, std::ios::in);
+    
+    if(!fileStream.is_open()) {
+        std::cerr << "Could not read file " << fname << ". File does not exist." << std::endl;
+        return "";
+    }
+    
+    std::string line = "";
+    while(!fileStream.eof()) {
+        std::getline(fileStream, line);
+        content.append(line + "\n");
 
+    }
+
+    //std::cout<<content<<"\n";
+    fileStream.close();
+    return content;
+    //return content.c_str();
+}
 void create_cube_map (
                       const char* front,
                       const char* back,

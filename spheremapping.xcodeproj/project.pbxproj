@@ -18,6 +18,7 @@
 		DE63C5CC1C58117A001C9275 /* stb_image.h in Sources */ = {isa = PBXBuildFile; fileRef = DE63C5C91C58117A001C9275 /* stb_image.h */; };
 		DE63C5CD1C58117A001C9275 /* math_funcs.h in Sources */ = {isa = PBXBuildFile; fileRef = DE63C5CA1C58117A001C9275 /* math_funcs.h */; };
 		DE63C5CF1C581342001C9275 /* math_funcs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE63C5CE1C581342001C9275 /* math_funcs.cpp */; };
+		DEE5B7C11C646AB800FA4291 /* fragmentShader.frag in Sources */ = {isa = PBXBuildFile; fileRef = DEE5B7C01C646AAC00FA4291 /* fragmentShader.frag */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -45,6 +46,7 @@
 		DE63C5C91C58117A001C9275 /* stb_image.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = stb_image.h; path = spheremapping/stb_image.h; sourceTree = "<group>"; };
 		DE63C5CA1C58117A001C9275 /* math_funcs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = math_funcs.h; path = spheremapping/math_funcs.h; sourceTree = "<group>"; };
 		DE63C5CE1C581342001C9275 /* math_funcs.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = math_funcs.cpp; path = spheremapping/math_funcs.cpp; sourceTree = "<group>"; };
+		DEE5B7C01C646AAC00FA4291 /* fragmentShader.frag */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; name = fragmentShader.frag; path = spheremapping/fragmentShader.frag; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -67,6 +69,7 @@
 		DE63C5A91C581084001C9275 = {
 			isa = PBXGroup;
 			children = (
+				DEE5B7C01C646AAC00FA4291 /* fragmentShader.frag */,
 				DE63C5CE1C581342001C9275 /* math_funcs.cpp */,
 				DE63C5C81C58117A001C9275 /* stb_image.c */,
 				DE63C5C91C58117A001C9275 /* stb_image.h */,
@@ -154,6 +157,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DEE5B7C11C646AB800FA4291 /* fragmentShader.frag in Sources */,
 				DE63C5CF1C581342001C9275 /* math_funcs.cpp in Sources */,
 				DE63C5CB1C58117A001C9275 /* stb_image.c in Sources */,
 				DE63C5CC1C58117A001C9275 /* stb_image.h in Sources */,
@@ -284,6 +288,7 @@
 				DE63C5BB1C581084001C9275 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
