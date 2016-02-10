@@ -1,0 +1,5 @@
+#ifndef __CONFIG_H_
+#define __CONFIG_H_
+#include<string>
+const std::string resource_dir = std::string("@CMAKE_SOURCE_DIR@") + "/resources/";
+#endif

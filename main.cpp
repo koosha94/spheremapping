@@ -6,7 +6,7 @@
 //  Copyright © 2016 Saeed Boor Boor. All rights reserved.
 //
 
-
+#include "lib/util/config.h"
 #include <GL/glew.h> // include GLEW and new version of GL on Windows
 #include <GLFW/glfw3.h> // GLFW helper library
 #include <stdio.h>
@@ -19,7 +19,6 @@
 #include <string>
 #include <iostream>
 #include <fstream>
-
 // camera matrices. it's easier if they are global
 mat4 view_mat;
 mat4 proj_mat;
@@ -46,6 +45,7 @@ GLFWwindow* window = NULL;
 GLFWwindow* window2 = NULL;
 
 int main () {
+    std::cout<<resource_dir<<std::endl;
     // start GL context and O/S window using the GLFW helper library
     if (!glfwInit ()) {
         fprintf (stderr, "ERROR: could not start GLFW3\n");
@@ -149,7 +149,8 @@ int main () {
 
     //Create Cube map
     GLuint cube_map_texture;
-    create_cube_map ("../resources/negz.jpg", "../resources/posz.jpg", "../resources/posy.jpg", "../resources/negy.jpg", "../resources/negx.jpg", "../resources/posx.jpg", &cube_map_texture);
+    
+    create_cube_map ((resource_dir+"negz.jpg").c_str(), (resource_dir+"posz.jpg").c_str(), (resource_dir+"posy.jpg").c_str(), (resource_dir+"negy.jpg").c_str(), (resource_dir+"negx.jpg").c_str(), (resource_dir+"posx.jpg").c_str(), &cube_map_texture);
     
     const char* vertex_shader =
     "#version 400\n"
@@ -164,7 +165,7 @@ int main () {
     "    gl_Position = P * V * vec4 (vp, 1.0);"
     "}";
     
-    const char* fragment_shader = loadShader("../resources/fragmentShader.frag").c_str();
+    const char* fragment_shader = loadShader(resource_dir+"fragmentShader.frag").c_str();
 
     
     /*"#version 400\n"
@@ -251,10 +252,10 @@ int main () {
     
    
 
-    GLuint square_sp = create_programme_from_files("../resources/square.vert", "../resources/square.frag");
+    GLuint square_sp = create_programme_from_files((resource_dir+"square.vert").c_str(), (resource_dir+"square.frag").c_str());
     
     GLuint tex;
-    assert (load_texture ("../resources/negz.jpg", &tex));
+    assert (load_texture ((resource_dir+"negz.jpg").c_str(), &tex));
     //*----------------------------------------------------------------------------------*/
     glfwMakeContextCurrent (window);
 

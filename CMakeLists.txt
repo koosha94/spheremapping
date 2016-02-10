@@ -18,7 +18,8 @@ set(Boost_USE_STATIC_LIBS   ON)
 set(Boost_USE_MULTITHREADED ON)
 FIND_PACKAGE( Boost 1.60 COMPONENTS program_options filesystem  REQUIRED )
 find_package(BoostCompute REQUIRED)
-
+configure_file(lib/util/config.h.in lib/util/config.h)
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 file( GLOB UTIL_LIB_SOURCES lib/util/*.cpp lib/util/*.c)
 file( GLOB UTIL_LIB_HEADERS lib/util/*.h )
 #file( GLOB RENDERER_LIB_SOURCES lib/Renderer/*.cpp )
@@ -49,9 +50,9 @@ target_link_libraries(NGRenderer ${GLFW_LIBRARIES})
 
 message(“${GLFW_INCLUDE_DIRS}”)
 target_link_libraries( NGRenderer ${Boost_LIBRARIES} )
-add_custom_command(TARGET NGRenderer PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/resources/
-        ${PROJECT_BINARY_DIR}/resources)
-message(“${PROJECT_BINARY_DIR}”)
+#add_custom_command(TARGET NGRenderer PRE_BUILD
+#    COMMAND ${CMAKE_COMMAND} -E copy_directory
+#        ${CMAKE_SOURCE_DIR}/resources/
+#        ${PROJECT_BINARY_DIR}/resources)
+#message(“${PROJECT_BINARY_DIR}”)
 install(TARGETS NGRenderer RUNTIME DESTINATION bin)
