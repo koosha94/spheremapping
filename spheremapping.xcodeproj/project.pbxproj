@@ -18,6 +18,8 @@
 		DE63C5CC1C58117A001C9275 /* stb_image.h in Sources */ = {isa = PBXBuildFile; fileRef = DE63C5C91C58117A001C9275 /* stb_image.h */; };
 		DE63C5CD1C58117A001C9275 /* math_funcs.h in Sources */ = {isa = PBXBuildFile; fileRef = DE63C5CA1C58117A001C9275 /* math_funcs.h */; };
 		DE63C5CF1C581342001C9275 /* math_funcs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE63C5CE1C581342001C9275 /* math_funcs.cpp */; };
+		DEE221911C6937450022A6DD /* gl_utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEE221901C6937450022A6DD /* gl_utils.cpp */; };
+		DEE221921C6937600022A6DD /* gl_utils.h in Sources */ = {isa = PBXBuildFile; fileRef = DEE2218F1C6937450022A6DD /* gl_utils.h */; };
 		DEE5B7C11C646AB800FA4291 /* fragmentShader.frag in Sources */ = {isa = PBXBuildFile; fileRef = DEE5B7C01C646AAC00FA4291 /* fragmentShader.frag */; };
 /* End PBXBuildFile section */
 
@@ -46,6 +48,10 @@
 		DE63C5C91C58117A001C9275 /* stb_image.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = stb_image.h; path = spheremapping/stb_image.h; sourceTree = "<group>"; };
 		DE63C5CA1C58117A001C9275 /* math_funcs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = math_funcs.h; path = spheremapping/math_funcs.h; sourceTree = "<group>"; };
 		DE63C5CE1C581342001C9275 /* math_funcs.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = math_funcs.cpp; path = spheremapping/math_funcs.cpp; sourceTree = "<group>"; };
+		DEE2218D1C690E120022A6DD /* square.vert */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; name = square.vert; path = spheremapping/square.vert; sourceTree = "<group>"; };
+		DEE2218E1C690F480022A6DD /* square.frag */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; name = square.frag; path = spheremapping/square.frag; sourceTree = "<group>"; };
+		DEE2218F1C6937450022A6DD /* gl_utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = gl_utils.h; path = spheremapping/gl_utils.h; sourceTree = "<group>"; };
+		DEE221901C6937450022A6DD /* gl_utils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = gl_utils.cpp; path = spheremapping/gl_utils.cpp; sourceTree = "<group>"; };
 		DEE5B7C01C646AAC00FA4291 /* fragmentShader.frag */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.glsl; name = fragmentShader.frag; path = spheremapping/fragmentShader.frag; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
@@ -69,6 +75,10 @@
 		DE63C5A91C581084001C9275 = {
 			isa = PBXGroup;
 			children = (
+				DEE2218F1C6937450022A6DD /* gl_utils.h */,
+				DEE221901C6937450022A6DD /* gl_utils.cpp */,
+				DEE2218E1C690F480022A6DD /* square.frag */,
+				DEE2218D1C690E120022A6DD /* square.vert */,
 				DEE5B7C01C646AAC00FA4291 /* fragmentShader.frag */,
 				DE63C5CE1C581342001C9275 /* math_funcs.cpp */,
 				DE63C5C81C58117A001C9275 /* stb_image.c */,
@@ -157,6 +167,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DEE221921C6937600022A6DD /* gl_utils.h in Sources */,
+				DEE221911C6937450022A6DD /* gl_utils.cpp in Sources */,
 				DEE5B7C11C646AB800FA4291 /* fragmentShader.frag in Sources */,
 				DE63C5CF1C581342001C9275 /* math_funcs.cpp in Sources */,
 				DE63C5CB1C58117A001C9275 /* stb_image.c in Sources */,

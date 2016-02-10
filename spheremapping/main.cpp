@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "stb_image.h"
+#include "gl_utils.h"
 #include <assert.h>
 #include <math.h>
 #include "math_funcs.h"
@@ -22,7 +23,7 @@
 // camera matrices. it's easier if they are global
 mat4 view_mat;
 mat4 proj_mat;
-vec3 cam_pos (0.0f, 0.0f, 5.0f);
+vec3 cam_pos (0.0f, 0.0f, 0.0f);
 
 void create_cube_map (
                       const char* front,
@@ -35,12 +36,14 @@ void create_cube_map (
                       );
 
 bool load_cube_map_side (GLuint texture, GLenum side_target, const char* file_name);
-void _update_fps_counter (GLFWwindow* window);
+void _update_fps_counter (GLFWwindow* window_in);
 std::string loadShader(std::string fname);
+bool load_texture (const char* file_name, GLuint* tex);
 
 int g_gl_width = 640;
 int g_gl_height = 480;
 GLFWwindow* window = NULL;
+GLFWwindow* window2 = NULL;
 
 int main () {
     // start GL context and O/S window using the GLFW helper library
@@ -55,16 +58,21 @@ int main () {
     glfwWindowHint (GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint (GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     
-    GLFWwindow* window = glfwCreateWindow (640, 480, "Hello Triangle", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow (640, 480, "Cube to Sphere", NULL, NULL);
     if (!window) {
+        fprintf (stderr, "ERROR: could not open window with GLFW3\n");
+        glfwTerminate();
+        return 1;
+    }
+    GLFWwindow* window2 = glfwCreateWindow (640, 480, "Just checking", NULL, NULL);
+    if (!window2) {
         fprintf (stderr, "ERROR: could not open window with GLFW3\n");
         glfwTerminate();
         return 1;
     }
     glfwMakeContextCurrent (window);
     
-    
-    // start GLEW extension handler
+    //start GLEW extension handler
     glewExperimental = GL_TRUE;
     glewInit ();
     
@@ -79,50 +87,6 @@ int main () {
     glDepthFunc (GL_LESS); // depth-testing interprets a smaller value as "closer"
     
     // OTHER STUFF GOES HERE NEXT
-    /*float points[] = {
-     -10.0f,  10.0f, -10.0f,
-     -10.0f, -10.0f, -10.0f,
-     10.0f, -10.0f, -10.0f,
-     10.0f, -10.0f, -10.0f,
-     10.0f,  10.0f, -10.0f,
-     -10.0f,  10.0f, -10.0f,
-     
-     -10.0f, -10.0f,  10.0f,
-     -10.0f, -10.0f, -10.0f,
-     -10.0f,  10.0f, -10.0f,
-     -10.0f,  10.0f, -10.0f,
-     -10.0f,  10.0f,  10.0f,
-     -10.0f, -10.0f,  10.0f,
-     
-     10.0f, -10.0f, -10.0f,
-     10.0f, -10.0f,  10.0f,
-     10.0f,  10.0f,  10.0f,
-     10.0f,  10.0f,  10.0f,
-     10.0f,  10.0f, -10.0f,
-     10.0f, -10.0f, -10.0f,
-     
-     -10.0f, -10.0f,  10.0f,
-     -10.0f,  10.0f,  10.0f,
-     10.0f,  10.0f,  10.0f,
-     10.0f,  10.0f,  10.0f,
-     10.0f, -10.0f,  10.0f,
-     -10.0f, -10.0f,  10.0f,
-     
-     -10.0f,  10.0f, -10.0f,
-     10.0f,  10.0f, -10.0f,
-     10.0f,  10.0f,  10.0f,
-     10.0f,  10.0f,  10.0f,
-     -10.0f,  10.0f,  10.0f,
-     -10.0f,  10.0f, -10.0f,
-     
-     -10.0f, -10.0f, -10.0f,
-     -10.0f, -10.0f,  10.0f,
-     10.0f, -10.0f, -10.0f,
-     10.0f, -10.0f, -10.0f,
-     -10.0f, -10.0f,  10.0f,
-     10.0f, -10.0f,  10.0f
-     };*/
-    
     float points[] = {
         -1.0f,  1.0f, -1.0f,
         -1.0f, -1.0f, -1.0f,
@@ -167,28 +131,12 @@ int main () {
         1.0f, -1.0f,  1.0f
     };
     
-    //points for camera triangle
-    GLfloat cam_points[] = {
-        0.0f,	0.5f,	0.0f,
-        0.5f, -0.5f,	0.0f,
-        -0.5f, -0.5f,	0.0f
-    };
-    
-
-    
-    
     
     GLuint vbo;
     glGenBuffers (1, &vbo);
     glBindBuffer (GL_ARRAY_BUFFER, vbo);
     glBufferData (GL_ARRAY_BUFFER, 3 * 36 * sizeof (float), &points, GL_STATIC_DRAW);
     
-    GLuint userCam_vbo;
-    glGenBuffers (1, &userCam_vbo);
-    glBindBuffer (GL_ARRAY_BUFFER, userCam_vbo);
-    glBufferData (GL_ARRAY_BUFFER, 9 * sizeof (GLfloat), cam_points,
-                  GL_STATIC_DRAW);
-
     
     GLuint vao;
     glGenVertexArrays (1, &vao);
@@ -196,34 +144,29 @@ int main () {
     glEnableVertexAttribArray (0);
     glBindBuffer (GL_ARRAY_BUFFER, vbo);
     glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-    
-    GLuint userCam_vao;
-    glGenVertexArrays (1, &userCam_vao);
-    glBindVertexArray (userCam_vao);
-    glEnableVertexAttribArray (0);
-    glBindBuffer (GL_ARRAY_BUFFER, userCam_vbo);
-    glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-    
-    
 
-    
+
+
     //Create Cube map
     GLuint cube_map_texture;
     create_cube_map ("/Users/saeedboorboor/PhD/Projects/spheremapping/spheremapping/negz.jpg", "/Users/saeedboorboor/PhD/Projects/spheremapping/spheremapping/posz.jpg", "/Users/saeedboorboor/PhD/Projects/spheremapping/spheremapping/posy.jpg", "/Users/saeedboorboor/PhD/Projects/spheremapping/spheremapping/negy.jpg", "/Users/saeedboorboor/PhD/Projects/spheremapping/spheremapping/negx.jpg", "/Users/saeedboorboor/PhD/Projects/spheremapping/spheremapping/posx.jpg", &cube_map_texture);
-    
     
     const char* vertex_shader =
     "#version 400\n"
     "in vec3 vp;"
     "uniform mat4 P, V;"
+   // "uniform vec3 vertOut;"
     "out vec3 texcoords;"
     "vec3 newP;"
     "void main () {"
     "    texcoords = vp;"
+   // "    vertOut = vp;"
     "    gl_Position = P * V * vec4 (vp, 1.0);"
     "}";
     
     const char* fragment_shader = loadShader("/Users/saeedboorboor/PhD/Projects/spheremapping/spheremapping/fragmentShader.frag").c_str();
+
+    
     /*"#version 400\n"
     "in vec3 texcoords;"
     "uniform samplerCube cube_texture;"
@@ -244,42 +187,10 @@ int main () {
     "}";*/
     
     
-    const char* userCam_vertex_shader =
-    "#version 400\n"
-    "attribute vec3 vp;"
-    "void main () {"
-    "	gl_Position = vec4 (vp, 1.0);"
-    "}";
-    /* the fragment shader colours each fragment (pixel-sized area of the
-     triangle) */
-    const char* userCam_fragment_shader =
-    "#version 400\n"
-    "void main () {"
-    "	gl_FragColor = vec4 (0.5, 0.0, 0.5, 0.2);"
-    "}";
-    /* GL shader objects for vertex and fragment shader [components] */
-    GLuint userCam_vs, userCam_fs;
-    /* GL shader programme object [combined, to link] */
-    GLuint userCam_shader_programme;
-    
-    
-    
-    userCam_vs = glCreateShader (GL_VERTEX_SHADER);
-    glShaderSource (userCam_vs, 1, &userCam_vertex_shader, NULL);
-    glCompileShader (userCam_vs);
-    userCam_fs = glCreateShader (GL_FRAGMENT_SHADER);
-    glShaderSource (userCam_fs, 1, &userCam_fragment_shader, NULL);
-    glCompileShader (userCam_fs);
-    userCam_shader_programme = glCreateProgram ();
-    glAttachShader (userCam_shader_programme, userCam_fs);
-    glAttachShader (userCam_shader_programme, userCam_vs);
-    glLinkProgram (userCam_shader_programme);
-    
     GLuint vs = glCreateShader (GL_VERTEX_SHADER);
     glShaderSource (vs, 1, &vertex_shader, NULL);
     glCompileShader (vs);
     GLuint fs = glCreateShader (GL_FRAGMENT_SHADER);
-
     glShaderSource (fs, 1, &fragment_shader, NULL);
     glCompileShader (fs);
     
@@ -289,15 +200,75 @@ int main () {
     glAttachShader (cube_sp, vs);
     glLinkProgram (cube_sp);
     
+    //*-----------------------------Compile Shaders for second window - square --------*/
+    
+    glfwMakeContextCurrent(window2);
+    
+    //start GLEW extension handler
+    glewExperimental = GL_TRUE;
+    glewInit ();
+    glEnable (GL_DEPTH_TEST); // enable depth-testing
+    glDepthFunc (GL_LESS); // depth-testing interprets a smaller value as "closer"
+    
+    float squarePoints[] =
+    {
+        -1.0f,  1.0f, -1.0f,
+        -1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f
+    };
+    
+    GLfloat texcoords[] = {
+        0.0f, 0.0f,
+        1.0f, 0.0f,
+        1.0f, 1.0f,
+        1.0f, 1.0f,
+        0.0f, 1.0f,
+        0.0f, 0.0f
+    };
+    
+    GLuint vbo_square;
+    glGenBuffers (1, &vbo_square);
+    glBindBuffer (GL_ARRAY_BUFFER, vbo_square);
+    glBufferData (GL_ARRAY_BUFFER, 3 * 6 * sizeof (float), &squarePoints, GL_STATIC_DRAW);
+    
+    GLuint texcoords_vbo;
+    glGenBuffers (1, &texcoords_vbo);
+    glBindBuffer (GL_ARRAY_BUFFER, texcoords_vbo);
+    glBufferData (GL_ARRAY_BUFFER, 12 * sizeof (GLfloat), texcoords, GL_STATIC_DRAW);
+    
+    GLuint vao_square;
+    glGenVertexArrays (1, &vao_square);
+    glBindVertexArray (vao_square);
+    glBindBuffer (GL_ARRAY_BUFFER, vbo_square);
+    glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    glBindBuffer (GL_ARRAY_BUFFER, texcoords_vbo);
+    glVertexAttribPointer (1, 2, GL_FLOAT, GL_FALSE, 0, NULL); // normalise!
+    glEnableVertexAttribArray (0);
+    glEnableVertexAttribArray (1);
+    
+   
+
+    GLuint square_sp = create_programme_from_files("/Users/saeedboorboor/PhD/Projects/spheremapping/spheremapping/square.vert", "/Users/saeedboorboor/PhD/Projects/spheremapping/spheremapping/square.frag");
+    
+    GLuint tex;
+    assert (load_texture ("/Users/saeedboorboor/PhD/Projects/spheremapping/spheremapping/negz.jpg", &tex));
+    //*----------------------------------------------------------------------------------*/
+    glfwMakeContextCurrent (window);
+
+    
     int cube_V_location = glGetUniformLocation (cube_sp, "V");
     int cube_P_location = glGetUniformLocation (cube_sp, "P");
+    //int cube_vertOut = glGetUniformLocation (cube_sp, "vertOut");
     
     /*-------------------------------CREATE GLOBAL CAMERA--------------------------------*/
     #define ONE_DEG_IN_RAD (2.0 * M_PI) / 360.0 // 0.017444444
     // input variables
     float near = 0.1f; // clipping plane
     float far = 100.0f; // clipping plane
-    float fovy = 67.0f; // 67 degrees
+    float fovy = 80.0f; // 67 degrees
     float aspect = (float)g_gl_width / (float)g_gl_height; // aspect ratio
     proj_mat = perspective (fovy, aspect, near, far);
     
@@ -313,20 +284,7 @@ int main () {
     vec4 rgt (1.0f, 0.0f, 0.0f, 0.0f);
     vec4 up (0.0f, 1.0f, 0.0f, 0.0f);
     
-    /*-------------------------------CREATE USER'S CAMERA--------------------------------*/
-
-
-    float user_cam_speed = 3.0f; // 1 unit per second
-    float user_cam_heading_speed = 50.0f; // 30 degrees per second
-    float user_cam_heading = 0.0f; // y-rotation in degrees
-    mat4 user_T = translate (identity_mat4 (), vec3 (-cam_pos.v[0], -cam_pos.v[1], -cam_pos.v[2]));
-    mat4 user_R = rotate_y_deg (identity_mat4 (), -cam_heading);
-    versor user_q = quat_from_axis_deg (-user_cam_heading, 0.0f, 1.0f, 0.0f);
-    view_mat = R * T;
-    // keep track of some useful vectors that can be used for keyboard movement
-    vec4 u_fwd (0.0f, 0.0f, -1.0f, 0.0f);
-    vec4 u_rgt (1.0f, 0.0f, 0.0f, 0.0f);
-    vec4 u_up (0.0f, 1.0f, 0.0f, 0.0f);
+    
     
     /*---------------------------SET RENDERING DEFAULTS---------------------------*/
     glUseProgram (cube_sp);
@@ -343,13 +301,13 @@ int main () {
     glClearColor (0.2, 0.2, 0.2, 1.0); // grey background to help spot mistakes
     glViewport (0, 0, g_gl_width, g_gl_height);
     
-    while (!glfwWindowShouldClose (window)) {
+    while (!glfwWindowShouldClose (window) && !glfwWindowShouldClose (window2)) {
         // update timers
         static double previous_seconds = glfwGetTime ();
         double current_seconds = glfwGetTime ();
         double elapsed_seconds = current_seconds - previous_seconds;
         previous_seconds = current_seconds;
-        _update_fps_counter (window);
+        //_update_fps_counter (window);
         
         // wipe the drawing surface clear
         glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -360,9 +318,36 @@ int main () {
         glActiveTexture (GL_TEXTURE0);
         glBindTexture (GL_TEXTURE_CUBE_MAP, cube_map_texture);
         glBindVertexArray (vao);
-        //glBindVertexArray (vao_sphere);
         glDrawArrays (GL_TRIANGLES, 0, 36);
         glDepthMask (GL_TRUE);
+        
+        //*---------------------------------Display for second window-------------------*/
+        
+        glfwMakeContextCurrent (window2);
+        glUseProgram (square_sp);
+        
+        int cubemap_vert = glGetUniformLocation (square_sp, "cubeMap_texcoords");
+        
+        
+        glEnable (GL_DEPTH_TEST); // enable depth-testing
+        glDepthFunc (GL_LESS); // depth-testing interprets a smaller value as "closer"
+        glEnable (GL_CULL_FACE); // cull face
+        glCullFace (GL_BACK); // cull back face
+        glFrontFace (GL_CCW); // set counter-clock-wise vertex order to mean the front
+        glClearColor (0.3, 0.2, 0.3, 1.0); // grey background to help spot mistakes
+        glViewport (0, 0, g_gl_width, g_gl_height);
+        
+        glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        
+        glDepthMask (GL_FALSE);
+        glUseProgram (square_sp);
+        glBindVertexArray (vao_square);
+        glDrawArrays (GL_TRIANGLES, 0, 6);
+        glDepthMask (GL_TRUE);
+
+        
+        //*------------------------------GO back to cubemap window--------------------*/
+        glfwMakeContextCurrent (window);
         
         // update other events like input handling
         glfwPollEvents ();
@@ -462,7 +447,7 @@ int main () {
             mat4 T = translate (identity_mat4 (), vec3 (cam_pos));
             
             view_mat = inverse (R) * inverse (T);
-            
+            //std::cout<<inverse(R).m<<std::endl;
             // cube-map view matrix has rotation, but not translation
             glUseProgram (cube_sp);
             glUniformMatrix4fv (cube_V_location, 1, GL_FALSE, inverse (R).m);
@@ -472,8 +457,15 @@ int main () {
         if (GLFW_PRESS == glfwGetKey (window, GLFW_KEY_ESCAPE)) {
             glfwSetWindowShouldClose (window, 1);
         }
+        if (GLFW_PRESS == glfwGetKey (window2, GLFW_KEY_ESCAPE)) {
+            glfwSetWindowShouldClose (window2, 1);
+        }
         // put the stuff we've been drawing onto the display
         glfwSwapBuffers (window);
+        
+        glfwMakeContextCurrent (window2);
+        glfwSwapBuffers (window2);
+        glfwMakeContextCurrent (window);
     }
     
     // close GL context and any other GLFW resources
@@ -499,7 +491,7 @@ std::string loadShader(std::string fname)
 
     }
 
-    //std::cout<<content<<"\n";
+    std::cout<<content<<"\n";
     fileStream.close();
     return content;
     //return content.c_str();
@@ -551,8 +543,47 @@ bool load_cube_map_side (GLuint texture, GLenum side_target, const char* file_na
     }
     
     // copy image data into 'target' side of cube map
+    glTexImage2D (side_target,0, GL_RGBA, x, y, 0, GL_RGBA, GL_UNSIGNED_BYTE, image_data);
+    free (image_data);
+    return true;
+}
+
+bool load_texture (const char* file_name, GLuint* tex) {
+    int x, y, n;
+    int force_channels = 4;
+    unsigned char* image_data = stbi_load (file_name, &x, &y, &n, force_channels);
+    if (!image_data) {
+        fprintf (stderr, "ERROR: could not load %s\n", file_name);
+        return false;
+    }
+    // NPOT check
+    if ((x & (x - 1)) != 0 || (y & (y - 1)) != 0) {
+        fprintf (
+                 stderr, "WARNING: texture %s is not power-of-2 dimensions\n", file_name
+                 );
+    }
+    int width_in_bytes = x * 4;
+    unsigned char *top = NULL;
+    unsigned char *bottom = NULL;
+    unsigned char temp = 0;
+    int half_height = y / 2;
+    
+    for (int row = 0; row < half_height; row++) {
+        top = image_data + row * width_in_bytes;
+        bottom = image_data + (y - row - 1) * width_in_bytes;
+        for (int col = 0; col < width_in_bytes; col++) {
+            temp = *top;
+            *top = *bottom;
+            *bottom = temp;
+            top++;
+            bottom++;
+        }
+    }
+    glGenTextures (1, tex);
+    glActiveTexture (GL_TEXTURE0);
+    glBindTexture (GL_TEXTURE_2D, *tex);
     glTexImage2D (
-                  side_target,
+                  GL_TEXTURE_2D,
                   0,
                   GL_RGBA,
                   x,
@@ -562,21 +593,30 @@ bool load_cube_map_side (GLuint texture, GLenum side_target, const char* file_na
                   GL_UNSIGNED_BYTE,
                   image_data
                   );
-    free (image_data);
+    glGenerateMipmap (GL_TEXTURE_2D);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    GLfloat max_aniso = 0.0f;
+    glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &max_aniso);
+    // set the maximum!
+    glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, max_aniso);
     return true;
 }
 
-void _update_fps_counter (GLFWwindow* window) {
+void _update_fps_counter (GLFWwindow* window_in) {
     static double previous_seconds = glfwGetTime ();
     static int frame_count;
     double current_seconds = glfwGetTime ();
     double elapsed_seconds = current_seconds - previous_seconds;
-    if (elapsed_seconds > 0.25) {
+    if (elapsed_seconds > 0.25)
+    {
         previous_seconds = current_seconds;
         double fps = (double)frame_count / elapsed_seconds;
         char tmp[128];
         sprintf (tmp, "opengl @ fps: %.2f", fps);
-        glfwSetWindowTitle (window, tmp);
+        glfwSetWindowTitle (window_in, tmp);
         frame_count = 0;
     }
     frame_count++;
