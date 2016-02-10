@@ -11,11 +11,11 @@
 #include <GLFW/glfw3.h> // GLFW helper library
 #include <stdio.h>
 #include <stdlib.h>
-#include "stb_image.h"
-#include "gl_utils.h"
+#include "lib/util/stb_image.h"
+#include "lib/util/gl_utils.h"
 #include <assert.h>
 #include <math.h>
-#include "math_funcs.h"
+#include "lib/util/math_funcs.h"
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -149,7 +149,7 @@ int main () {
 
     //Create Cube map
     GLuint cube_map_texture;
-    create_cube_map ("/Users/saeedboorboor/PhD/Projects/spheremapping/spheremapping/negz.jpg", "/Users/saeedboorboor/PhD/Projects/spheremapping/spheremapping/posz.jpg", "/Users/saeedboorboor/PhD/Projects/spheremapping/spheremapping/posy.jpg", "/Users/saeedboorboor/PhD/Projects/spheremapping/spheremapping/negy.jpg", "/Users/saeedboorboor/PhD/Projects/spheremapping/spheremapping/negx.jpg", "/Users/saeedboorboor/PhD/Projects/spheremapping/spheremapping/posx.jpg", &cube_map_texture);
+    create_cube_map ("../resources/negz.jpg", "../resources/posz.jpg", "../resources/posy.jpg", "../resources/negy.jpg", "../resources/negx.jpg", "../resources/posx.jpg", &cube_map_texture);
     
     const char* vertex_shader =
     "#version 400\n"
@@ -164,7 +164,7 @@ int main () {
     "    gl_Position = P * V * vec4 (vp, 1.0);"
     "}";
     
-    const char* fragment_shader = loadShader("/Users/saeedboorboor/PhD/Projects/spheremapping/spheremapping/fragmentShader.frag").c_str();
+    const char* fragment_shader = loadShader("../resources/fragmentShader.frag").c_str();
 
     
     /*"#version 400\n"
@@ -251,10 +251,10 @@ int main () {
     
    
 
-    GLuint square_sp = create_programme_from_files("/Users/saeedboorboor/PhD/Projects/spheremapping/spheremapping/square.vert", "/Users/saeedboorboor/PhD/Projects/spheremapping/spheremapping/square.frag");
+    GLuint square_sp = create_programme_from_files("../resources/square.vert", "../resources/square.frag");
     
     GLuint tex;
-    assert (load_texture ("/Users/saeedboorboor/PhD/Projects/spheremapping/spheremapping/negz.jpg", &tex));
+    assert (load_texture ("../resources/negz.jpg", &tex));
     //*----------------------------------------------------------------------------------*/
     glfwMakeContextCurrent (window);
 
