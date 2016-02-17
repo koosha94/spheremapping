@@ -19,6 +19,11 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+//#include "lib/util/CLGL.hpp"
+#include <boost/compute/interop/opengl/context.hpp>
+#include <boost/compute/interop/opengl/opengl_texture.hpp>
+#include <boost/compute.hpp>
+#include <boost/exception/all.hpp>
 // camera matrices. it's easier if they are global
 mat4 view_mat;
 mat4 proj_mat;
@@ -45,7 +50,6 @@ GLFWwindow* window = NULL;
 GLFWwindow* window2 = NULL;
 
 int main () {
-    std::cout<<resource_dir<<std::endl;
     // start GL context and O/S window using the GLFW helper library
     if (!glfwInit ()) {
         fprintf (stderr, "ERROR: could not start GLFW3\n");
@@ -81,6 +85,15 @@ int main () {
     const GLubyte* version = glGetString (GL_VERSION); // version as a string
     printf ("Renderer: %s\n", renderer);
     printf ("OpenGL version supported %s\n", version);
+    //CLGLUtils::init();
+    boost::compute::context context;
+    try {
+        context = boost::compute::opengl_create_shared_context();
+        
+    } catch (std::exception e) {
+        std::cerr<<"Failed to initialize a CLGL context"<<e.what()<<std::endl;
+        exit(0);
+    }
     
     // tell GL to only draw onto a pixel if the shape is closer to the viewer
     glEnable (GL_DEPTH_TEST); // enable depth-testing
@@ -151,6 +164,12 @@ int main () {
     GLuint cube_map_texture;
     
     create_cube_map ((resource_dir+"negz.jpg").c_str(), (resource_dir+"posz.jpg").c_str(), (resource_dir+"posy.jpg").c_str(), (resource_dir+"negy.jpg").c_str(), (resource_dir+"negx.jpg").c_str(), (resource_dir+"posx.jpg").c_str(), &cube_map_texture);
+    boost::shared_ptr<boost::compute::opengl_texture> cl_cube_map_texture;
+    try {
+        cl_cube_map_texture = boost::shared_ptr<boost::compute::opengl_texture>(new boost::compute::opengl_texture(context,GL_TEXTURE_2D_ARRAY,0,cube_map_texture,boost::compute::memory_object::mem_flags::read_only));
+    } catch ( const std::exception& e ) {
+        std::cerr << e.what() << std::endl;
+    }
     
     const char* vertex_shader =
     "#version 400\n"

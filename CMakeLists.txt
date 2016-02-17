@@ -21,7 +21,7 @@ find_package(BoostCompute REQUIRED)
 configure_file(lib/util/config.h.in lib/util/config.h)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 file( GLOB UTIL_LIB_SOURCES lib/util/*.cpp lib/util/*.c)
-file( GLOB UTIL_LIB_HEADERS lib/util/*.h )
+file( GLOB UTIL_LIB_HEADERS lib/util/*.h lib/util/*.hpp )
 #file( GLOB RENDERER_LIB_SOURCES lib/Renderer/*.cpp )
 #file( GLOB RENDERER_LIB_HEADERS lib/Renderer/*.h )
 
